@@ -1,47 +1,130 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 // Desafio Detective Quest
-// Tema 4 - Árvores e Tabela Hash
-// Este código inicial serve como base para o desenvolvimento das estruturas de navegação, pistas e suspeitos.
-// Use as instruções de cada região para desenvolver o sistema completo com árvore binária, árvore de busca e tabela hash.
 
-int main() {
+// declaração da struct com a propriedade e próximos elementos
+typedef struct sala
+{
+    char nome[40];
+    struct sala *esquerda;
+    struct sala *direita;
+} Sala;
 
-    // 🌱 Nível Novato: Mapa da Mansão com Árvore Binária
-    //
-    // - Crie uma struct Sala com nome, e dois ponteiros: esquerda e direita.
-    // - Use funções como criarSala(), conectarSalas() e explorarSalas().
-    // - A árvore pode ser fixa: Hall de Entrada, Biblioteca, Cozinha, Sótão etc.
-    // - O jogador deve poder explorar indo à esquerda (e) ou à direita (d).
-    // - Finalize a exploração com uma opção de saída (s).
-    // - Exiba o nome da sala a cada movimento.
-    // - Use recursão ou laços para caminhar pela árvore.
-    // - Nenhuma inserção dinâmica é necessária neste nível.
+// declaraçao das funções
+Sala *criarSala(char nome[]);
+Sala *explorarSalas(Sala *raiz, char caminho);
+void liberar(Sala *raiz);
 
-    // 🔍 Nível Aventureiro: Armazenamento de Pistas com Árvore de Busca
-    //
-    // - Crie uma struct Pista com campo texto (string).
-    // - Crie uma árvore binária de busca (BST) para inserir as pistas coletadas.
-    // - Ao visitar salas específicas, adicione pistas automaticamente com inserirBST().
-    // - Implemente uma função para exibir as pistas em ordem alfabética (emOrdem()).
-    // - Utilize alocação dinâmica e comparação de strings (strcmp) para organizar.
-    // - Não precisa remover ou balancear a árvore.
-    // - Use funções para modularizar: inserirPista(), listarPistas().
-    // - A árvore de pistas deve ser exibida quando o jogador quiser revisar evidências.
+// cria uma nova sala
+Sala *criarSala(char nome[])
+{
+    Sala *novo = (Sala *)malloc(sizeof(Sala));
+    strcpy(novo->nome, nome);
+    novo->esquerda = NULL;
+    novo->direita = NULL;
+    return novo;
+}
 
-    // 🧠 Nível Mestre: Relacionamento de Pistas com Suspeitos via Hash
-    //
-    // - Crie uma struct Suspeito contendo nome e lista de pistas associadas.
-    // - Crie uma tabela hash (ex: array de ponteiros para listas encadeadas).
-    // - A chave pode ser o nome do suspeito ou derivada das pistas.
-    // - Implemente uma função inserirHash(pista, suspeito) para registrar relações.
-    // - Crie uma função para mostrar todos os suspeitos e suas respectivas pistas.
-    // - Adicione um contador para saber qual suspeito foi mais citado.
-    // - Exiba ao final o “suspeito mais provável” baseado nas pistas coletadas.
-    // - Para hashing simples, pode usar soma dos valores ASCII do nome ou primeira letra.
-    // - Em caso de colisão, use lista encadeada para tratar.
-    // - Modularize com funções como inicializarHash(), buscarSuspeito(), listarAssociacoes().
+// explora as salas conforme caminho escolhido
+Sala *explorarSalas(Sala *raiz, char caminho)
+{
+    if (raiz == NULL)
+    {
+        printf("\nSala inválida.\n");
+        return NULL;
+    }
+
+    Sala *atual = raiz;
+
+    if (caminho == 'E' || caminho == 'e')
+    {
+        if(atual->esquerda == NULL){
+            printf("\nNão há sala à esquerda. Tente outro caminho.\n");
+            return atual;
+        }
+        atual = atual->esquerda;
+    }
+    else if (caminho == 'D' || caminho == 'd')
+    {
+        if(atual->direita == NULL){
+            printf("\nNão há sala à direita. Tente outro caminho.\n");
+            return atual;
+        }
+        atual = atual->direita;
+    }
+
+    printf("\nVocê está na sala: %s\n", atual->nome);
+    return atual;
+}
+
+// libera memoria alocada para a árvore
+void liberar(Sala *raiz)
+{
+    if (raiz != NULL)
+    {
+        liberar(raiz->esquerda);
+        liberar(raiz->direita);
+        free(raiz);
+    }
+}
+
+// função principal
+int main()
+{
+    // inicializa variáveis
+    char caminho = '\0';
+    Sala *raiz = criarSala("Hall de Entrada");
+    Sala *atual = raiz;
+    raiz->esquerda = criarSala("Sala de Estar");
+    raiz->direita = criarSala("Biblioteca");
+    raiz->esquerda->esquerda = criarSala("Quarto");
+    raiz->direita->direita = criarSala("Escritório");
+    raiz->esquerda->esquerda->direita = criarSala("Sótão");
+    raiz->direita->direita->esquerda = criarSala("Cozinha");
+    raiz->esquerda->esquerda->esquerda = criarSala("Banheiro");
+
+    printf("\n***********************************************************");
+    printf("\n                      Detective Quest                      ");
+    printf("\n***********************************************************\n");
+    printf("\nVocê está no Hall de Entrada da Mansão! Selecione uma opção para explorar: ");
+
+    // laço para menu principal
+    do
+    {
+        printf("\nDigite 'E' para entrar à esquerda\nDigite 'D' para entrar à direita\nDigite 'S' para sair da sala");
+        printf("\n-> Opção: ");
+        scanf(" %c", &caminho);
+
+        switch(caminho){
+            case 'E': case 'e':
+            case 'D': case 'd':
+                // entra na sala conforme escolha
+                atual = explorarSalas(atual, caminho);
+
+                // se chegar a uma sala sem saída, encerra o jogo
+                if (atual->esquerda == NULL && atual->direita == NULL)
+                {
+                    printf("\nEssa sala não tem saída. Fim do jogo!\n");
+                    caminho = 'S';
+                    break;
+                }
+
+                break;
+            case 'S': case 's':
+                printf("\nSaindo da mansão...\n");
+                break;
+            default:
+                printf("\nOpção inválida. Use apenas 'E' para esquerda, 'D' para direita e 'S' para sair.\n");
+                continue;
+        }
+    } while (caminho != 's' && caminho != 'S');
+
+    // libera memoria alocada
+    liberar(raiz);
+
+    printf("\nEncerrando o jogo...\n\n");
 
     return 0;
 }
-
